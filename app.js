@@ -1,8 +1,9 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const methodOverride = require('method-override')
-const Campground = require('./models/campground')
 const ejsMate = require('ejs-mate')
+const {campgroundSchema} = require('./JoiSchemas')
+const Campground = require('./models/campground')
 const ExpressError = require('./utils/ExpressError')
 const catchAsync = require('./utils/CatchAsync')
 
@@ -33,6 +34,18 @@ app.set('views', path.join(__dirname, 'views'))
 app.use(methodOverride('_method'))
 app.use(express.urlencoded({ extended: true }))
 
+const validateCampground = (req,res,next)=>{
+    
+    const {error}=campgroundSchema.validate(req.body)
+    if(error){
+        const msg= error.details.map( el => el.message).join()
+        throw new ExpressError(msg,400)
+    }else{
+        next()
+    }
+
+}
+
 
 app.get('/', (req, res) => {
     res.render('home')
@@ -54,8 +67,10 @@ app.get('/campgrounds/:id', catchAsync(async (req, res) => {
 }))
 
 
-app.post('/campgrounds', catchAsync(async (req, res, next) => {
+app.post('/campgrounds',validateCampground, catchAsync(async (req, res, next) => {
 
+    // if(!req.body.campground) throw new ExpressError('empty campground',400)
+    
     const newCamp = new Campground(req.body.campground)
     await newCamp.save()
     res.redirect(`/campgrounds/${newCamp.id}`)
@@ -67,7 +82,7 @@ app.get('/campgrounds/:id/edit', catchAsync(async (req, res) => {
     res.render('campgrounds/edit', { campground })
 }))
 
-app.put('/campgrounds/:id', catchAsync(async (req, res) => {
+app.put('/campgrounds/:id',validateCampground, catchAsync(async (req, res) => {
     await Campground.findByIdAndUpdate(req.params.id, req.body.Campground)
     res.redirect(`/campgrounds/${req.params.id}`)
 }))
