@@ -7,7 +7,11 @@ const flash=require('connect-flash')
 const ExpressError = require('./utils/ExpressError')
 const campgroundRoutes = require('./routes/campgrounds')
 const reviewRoutes = require('./routes/reviews')
+const userRoutes=require('./routes/users')
 const app = express()
+const passport = require('passport')
+const localStrategy=require('passport-local')
+const User = require('./models/user')
 
 
 const path = require('path')
@@ -37,7 +41,16 @@ const sessionConfig = {
 }
 app.use(session(sessionConfig))
 app.use(flash())
+
+app.use(passport.initialize())
+app.use(passport.session())
+passport.use(new localStrategy(User.authenticate()))
+
+passport.serializeUser(User.serializeUser())
+passport.deserializeUser(User.deserializeUser())
+
 app.use((req,res,next)=>{
+    res.locals.currentUser=req.user
     res.locals.success = req.flash('success')
     res.locals.error = req.flash('error')
     return next();
@@ -49,12 +62,13 @@ app.use(express.static(path.join(__dirname,'public')))
 
 
 
-
+app.use('/',userRoutes)
 app.use('/campgrounds',campgroundRoutes)
 app.use('/campgrounds/:id/reviews',reviewRoutes)
 app.get('/', (req, res) => {
     res.render('home')
 })
+
 
 app.all('*',(req,res,next)=>{
     next(new ExpressError('page not found',404))
