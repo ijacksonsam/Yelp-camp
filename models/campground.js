@@ -3,6 +3,15 @@ const { campgroundSchema } = require('../JoiSchemas')
 const Schema = mongoose.Schema
 const Review = require('./review')
 
+const ImageSchema = new Schema({
+    url:String,
+    filename:String
+})
+
+ImageSchema.virtual('thumbnail').get(function(){
+    return this.url.replace('/upload','/upload/w_200,h_150,c_fill')
+})
+
 const CampgroundSchema = new Schema({
     title: String,
     price: Number,
@@ -12,7 +21,7 @@ const CampgroundSchema = new Schema({
     },
     description: String,
     location: String,
-    image: String,
+    images: [ImageSchema],
     reviews: [{
         type: Schema.Types.ObjectId, ref: 'Review'
     }]
