@@ -38,6 +38,13 @@ const CampgroundSchema = new Schema({
     }]
 })
 
+CampgroundSchema.set('toJSON', { virtuals: true });
+
+CampgroundSchema.virtual('properties.popup').get(function () {
+    return `<h5><a href="/campgrounds/${this.id}">${this.title}</a></h5>
+    <p class="card-subtitle mb-2 text-muted">${this.location}</p>`;
+})
+
 CampgroundSchema.post('findOneAndDelete', async function (doc) {
     if (doc) {
         await Review.deleteMany({
