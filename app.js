@@ -17,27 +17,46 @@ const passport = require('passport')
 const localStrategy=require('passport-local')
 const User = require('./models/user')
 const mongoSanitize = require('express-mongo-sanitize')
-const helmet=require('helmet')
+const helmet = require('helmet')
+const MongoDBStore=require("connect-mongo")
 
 
 const path = require('path')
 mongoose.set('strictQuery', false);
 
-
-mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp')
+// const dbUrl = process.env.DB_URL
+const dbUrl=process.env.DB_URL || 'mongodb://127.0.0.1:27017/yelp-camp'
+mongoose.connect(dbUrl)
 const db = mongoose.connection
 db.on('error', console.error.bind(console, "connection error :"));
 db.once('open', () => {
     console.log('database connected')
 })
 
+
+
 app.engine('ejs', ejsMate)
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
+const secret = process.env.SECRET || 'thisisabadsecret' 
+
+const store = MongoDBStore.create({
+    mongoUrl: dbUrl,
+    touchAfter: 24 * 60 * 60,
+    crypto: {
+        secret
+    }
+});
+
+store.on("error", function (e) {
+    console.log("session store error",e)
+})
+
 const sessionConfig = {
+    store,
     name:'session',
-    secret:'thisisabadsecret',
+    secret,
     resave:false,
     saveUninitialized:true,
     cookie:{
@@ -46,6 +65,8 @@ const sessionConfig = {
         maxAge:1000*60*60*24*7
     }
 }
+
+
 
 const scriptSrcUrls = [
     "https://stackpath.bootstrapcdn.com/",
@@ -141,7 +162,8 @@ app.use((err, req, res, next) => {
     res.status(statusCode).render('error' , {err})
 })
 
+const port = process.env.PORT || 3000
 
-app.listen(3000, () => {
-    console.log('serving on port 3000')
+app.listen(port, () => {
+    console.log(`serving on port ${port}`)
 })
