@@ -3,8 +3,13 @@ mongoose.set('strictQuery', false);
 const Campground = require('../models/campground')
 const {indianCities, americanCities ,oldIndianCities} = require('./cities')
 const { descriptors, places } = require('./seedHelpers')
+if(process.env.NODE_ENV!=='production'){
+  require('dotenv').config()
+}
+const dbUrl = process.env.DB_URL || 'mongodb://127.0.0.1:27017/yelp-camp'
 
-mongoose.connect('mongodb://127.0.0.1:27017/yelp-camp')
+
+mongoose.connect(dbUrl)
 
 const db = mongoose.connection
 db.on('error', console.error.bind(console, "connection error :"));
@@ -30,7 +35,7 @@ const seedDB = async () => {
       title: sample(descriptors) + " " + sample(places),
       description: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Officiis deserunt soluta et laboriosam magni autem quae alias quod in? Rem aut provident voluptatum ipsam, magni harum ut fuga nostrum modi.",
       price,
-      author: "640bf875297d8d366fcd9195",
+      author: "642966baab520dc240a694b1",
       images: [
         {
           url: 'https://res.cloudinary.com/dfbytcndx/image/upload/v1678506421/YelpCamp/ooivjqcakmaq1rlupt56.jpg',
